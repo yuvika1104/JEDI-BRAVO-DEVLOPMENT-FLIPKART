@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename Java project &apos;GEDI_BRAVO_FLIPFIT_PROJECT_DEVELOPMENT&apos; to &apos;JEDI_BRAVO_FLIPFIT_PROJECT_DEVELOPMENT&apos;&#x0A;- Original element: &apos;GEDI_BRAVO_FLIPFIT_PROJECT_DEVELOPMENT&apos;&#x0A;- Renamed element: &apos;GEDI_BRAVO_FLIPFIT_PROJECT_DEVELOPMENT&apos;&#x0A;- Update references to refactored element" description="Rename Java project &apos;GEDI_BRAVO_FLIPFIT_PROJECT_DEVELOPMENT&apos;" flags="7" id="org.eclipse.jdt.ui.rename.java.project" input="=GEDI_BRAVO_FLIPFIT_PROJECT_DEVELOPMENT" name="JEDI_BRAVO_FLIPFIT_PROJECT_DEVELOPMENT" references="true" stamp="1769148239046" version="1.0"/>
+</session>
