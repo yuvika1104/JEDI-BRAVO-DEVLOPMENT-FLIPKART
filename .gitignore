@@ -1,0 +1,39 @@
+# Eclipse
+.classpath
+.project
+.settings/
+.buildpath
+
+# IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Maven
+target/
+
+# Gradle
+.gradle/
+build/
+
+# Compiled classes
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Log Files #
+*.log
+logs/
+
+# OS generated files #
+.DS_Store
+.localized
+Thumbs.db
+
+# My additions based on current status
+.metadata/
+bin/
