@@ -1,5 +1,11 @@
 package com.flipfit.bean;
 
+import java.time.LocalTime;
+
+/**
+ * Represents a specific time slot at a gym center.
+ * Handles availability logic for the booking service.
+ */
 public class GymSlot {
 	private String slotId;
 	private String StartTime;
@@ -31,4 +37,6 @@ public class GymSlot {
 	}
 	
 
+    public int getAvailableSeats() { return availableSeats; }
+    public void setAvailableSeats(int availableSeats) { this.availableSeats = availableSeats; }
 }
