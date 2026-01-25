@@ -25,6 +25,7 @@ public final class DataStore {
 	private static final Map<String, GymUser> USERS = new HashMap<>();
 	private static final Map<String, GymCenter> CENTERS = new HashMap<>();
 	private static final Map<String, Booking> BOOKINGS = new HashMap<>();
+	private static final Map<String, List<Booking>> WAITLIST = new HashMap<>();
 
 	private static final AtomicInteger CENTER_SEQ = new AtomicInteger(100);
 	private static final AtomicInteger SLOT_SEQ = new AtomicInteger(200);
@@ -87,7 +88,7 @@ public final class DataStore {
 	private static List<GymSlot> defaultSlots() {
 		List<GymSlot> slots = new ArrayList<>();
 		int seats = 10;
-		slots.add(buildSlot("06:00", "07:00", seats));
+		slots.add(buildSlot("06:00", "07:00", 1));
 		slots.add(buildSlot("07:00", "08:00", seats));
 		slots.add(buildSlot("08:00", "09:00", seats));
 		slots.add(buildSlot("18:00", "19:00", seats));
@@ -147,6 +148,22 @@ public final class DataStore {
 		return BOOKINGS.remove(bookingId);
 	}
 
+	public static void addToWaitlist(String slotId, Booking booking) {
+		WAITLIST.computeIfAbsent(slotId, k -> new ArrayList<>()).add(booking);
+	}
+
+	public static List<Booking> getWaitlist(String slotId) {
+		return WAITLIST.getOrDefault(slotId, List.of());
+	}
+
+	public static Booking popWaitlist(String slotId) {
+		List<Booking> list = WAITLIST.get(slotId);
+		if (list == null || list.isEmpty()) {
+			return null;
+		}
+		return list.remove(0);
+	}
+
 	// ---------- Id generation ----------
 	public static String nextCenterId() {
 		return "C" + CENTER_SEQ.getAndIncrement();
@@ -166,7 +183,7 @@ public final class DataStore {
 
 	// ---------- Utility helpers ----------
 	public static String buildDateKey(LocalDate date, LocalTime startTime) {
-		return date.toString() + "-" + startTime.toString();
+		return date.toString() + " " + startTime.toString();
 	}
 }
 

@@ -12,6 +12,7 @@ import com.flipfit.bean.GymCenter;
 import com.flipfit.bean.GymSlot;
 import com.flipfit.bean.GymUser;
 import com.flipfit.business.CustomerService;
+import com.flipfit.helper.DataStore;
 
 public class CustomerMenu {
 
@@ -86,16 +87,31 @@ public class CustomerMenu {
 		String centerId = scanner.next();
 		System.out.print("Enter date (yyyy-MM-dd): ");
 		String dateInput = scanner.next();
-		System.out.print("Enter start time (HH:mm): ");
-		String start = scanner.next();
-		System.out.print("Enter end time (HH:mm): ");
-		String end = scanner.next();
 
 		try {
 			Date date = new SimpleDateFormat("yyyy-MM-dd").parse(dateInput);
-			LocalTime startTime = LocalTime.parse(start);
-			LocalTime endTime = LocalTime.parse(end);
-			String bookingId = customerService.bookSlot(loggedInUser.getUserId(), centerId, startTime, endTime, date);
+			System.out.println("Available slots for center " + centerId + " on " + dateInput + ":");
+			GymSlot chosen = null;
+			for (GymSlot slot : customerService.viewSlotsForCenter(centerId)) {
+				int remaining = remainingSeats(slot, date);
+				System.out.println(slot.getSlotId() + " | " + slot.getStartTime() + "-" + slot.getEndTime()
+						+ " | Seats left: " + remaining);
+			}
+			System.out.print("Enter slot id to book: ");
+			String slotId = scanner.next();
+			for (GymSlot slot : customerService.viewSlotsForCenter(centerId)) {
+				if (slot.getSlotId().equals(slotId)) {
+					chosen = slot;
+					break;
+				}
+			}
+			if (chosen == null) {
+				System.out.println("Invalid slot id.");
+				return;
+			}
+
+			String bookingId = customerService.bookSlot(loggedInUser.getUserId(), centerId, chosen.getStartTime(),
+					chosen.getEndTime(), date);
 			if (bookingId != null) {
 				System.out.println("Booking confirmed with id: " + bookingId);
 			} else {
@@ -123,5 +139,13 @@ public class CustomerMenu {
 		String id = scanner.next();
 		boolean result = customerService.cancelBooking(id);
 		System.out.println(result ? "Booking cancelled." : "Booking not found.");
+	}
+
+	private int remainingSeats(GymSlot slot, Date date) {
+		String datePrefix = new java.sql.Date(date.getTime()).toLocalDate().toString();
+		long booked = DataStore.getAllBookings().stream()
+				.filter(b -> b.getGymSlot() != null && slot.getSlotId().equals(b.getGymSlot().getSlotId()))
+				.filter(b -> b.getDateAndTime() != null && b.getDateAndTime().startsWith(datePrefix)).count();
+		return slot.getTotalSeats() - (int) booked;
 	}
 }

@@ -34,13 +34,10 @@ public class BookingServiceImpl implements BookingService {
 			return null;
 		}
 
-		if (!slot.isAvailable()) {
-			System.out.println("Slot is fully booked.");
-			return null;
-		}
+		LocalDate localDate = new java.sql.Date(date.getTime()).toLocalDate();
+		boolean capacity = hasCapacity(slot, localDate);
 
 		// Remove older booking if user already has one for the same start time on same date
-		LocalDate localDate = new java.sql.Date(date.getTime()).toLocalDate();
 		checkOverlapAndRemove(userId, localDate, startTime);
 
 		String bookingId = DataStore.nextBookingId();
@@ -49,12 +46,16 @@ public class BookingServiceImpl implements BookingService {
 		booking.setGymUser(user);
 		booking.setGymSlot(slot);
 		booking.setDateAndTime(localDate.toString() + " " + startTime.toString());
-		booking.setBookingStatus(BookingStatus.CONFIRMED);
-
-		slot.decreaseAvailability();
-		DataStore.saveBooking(booking);
-
-		return bookingId;
+		if (capacity) {
+			booking.setBookingStatus(BookingStatus.CONFIRMED);
+			DataStore.saveBooking(booking);
+			return bookingId;
+		} else {
+			booking.setBookingStatus(BookingStatus.WAITLIST);
+			DataStore.addToWaitlist(slot.getSlotId(), booking);
+			System.out.println("Slot full. Added to waitlist with id: " + bookingId);
+			return bookingId;
+		}
 	}
 
 	@Override
@@ -66,6 +67,7 @@ public class BookingServiceImpl implements BookingService {
 		}
 		if (booking.getGymSlot() != null) {
 			booking.getGymSlot().increaseAvailability();
+			promoteWaitlisted(booking.getGymSlot());
 		}
 		return true;
 	}
@@ -94,11 +96,33 @@ public class BookingServiceImpl implements BookingService {
 	}
 
 	private void checkOverlapAndRemove(String userId, LocalDate date, LocalTime time) {
-		String key = DataStore.buildDateKey(date, time);
+		String key = date.toString() + " " + time.toString();
 		Optional<Booking> existing = DataStore.getAllBookings().stream()
 				.filter(b -> b.getGymUser() != null && userId.equals(b.getGymUser().getUserId()))
-				.filter(b -> b.getDateAndTime() != null && b.getDateAndTime().startsWith(key)).findFirst();
-		existing.ifPresent(b -> cancelBooking(b.getBookingId()));
+				.filter(b -> key.equals(b.getDateAndTime())).findFirst();
+		existing.ifPresent(b -> {
+			System.out.println("Conflict detected: existing booking " + b.getBookingId() + " at " + key
+					+ ". Cancelling it before creating the new booking.");
+			cancelBooking(b.getBookingId());
+		});
+	}
+
+	private boolean hasCapacity(GymSlot slot, LocalDate date) {
+		long bookedCount = DataStore.getAllBookings().stream()
+				.filter(b -> b.getGymSlot() != null && slot.getSlotId().equals(b.getGymSlot().getSlotId()))
+				.filter(b -> b.getDateAndTime() != null && b.getDateAndTime().startsWith(date.toString()))
+				.count();
+		return bookedCount < slot.getTotalSeats();
+	}
+
+	private void promoteWaitlisted(GymSlot slot) {
+		Booking next = DataStore.popWaitlist(slot.getSlotId());
+		if (next == null) {
+			return;
+		}
+		next.setBookingStatus(BookingStatus.CONFIRMED);
+		DataStore.saveBooking(next);
+		System.out.println("Promoted waitlisted booking: " + next.getBookingId());
 	}
 
 	private String resolveCenterId(GymSlot slot) {
