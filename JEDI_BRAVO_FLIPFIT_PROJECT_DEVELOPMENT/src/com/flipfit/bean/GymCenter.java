@@ -3,6 +3,7 @@ package com.flipfit.bean;
 import java.util.List;
 
 public class GymCenter {
+
 	private String centerId;
 	private String centerLocn;
 	private String centerCity;
